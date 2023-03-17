@@ -1,0 +1,2 @@
+hw0
+-DCATKIN_DEVEL_PREFIX=/home/mahdi/Desktop/Robotics/project1/Hands_on/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/mahdi/Desktop/Robotics/project1/Hands_on/catkin_ws/install -G Unix Makefiles
