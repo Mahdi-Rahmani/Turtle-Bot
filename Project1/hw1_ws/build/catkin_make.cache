@@ -1,0 +1,2 @@
+my_turtle
+-DCATKIN_DEVEL_PREFIX=/home/mahdi/Desktop/Robotics/project1/hw1_ws/devel -DCMAKE_INSTALL_PREFIX=/home/mahdi/Desktop/Robotics/project1/hw1_ws/install -G Unix Makefiles

@@ -1,0 +1,8 @@
+prefix=/home/mahdi/Desktop/Robotics/project1/hw1_ws/devel
+
+Name: my_turtle
+Description: Description of my_turtle
+Version: 0.0.0
+Cflags: -I/home/mahdi/Desktop/Robotics/project1/hw1_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: message_runtime
