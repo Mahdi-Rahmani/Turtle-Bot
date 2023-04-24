@@ -1,0 +1,18 @@
+<launch>
+
+    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_detect_obstacles.launch">
+        <arg name="x_pos" value="0.0"/>
+        <arg name="y_pos" value="0.0"/>
+        <arg name="z_pos" value="0.0"/>
+        <arg name="yaw" value="0.75"/>
+    </include>
+
+    <include file="$(find turtlebot_rviz_launchers)/launch/view_robot.launch"/>
+
+    <node pkg="obstacle_detect" type="sensor_node.py" name="sensor" output="screen"></node>
+
+    <node pkg="obstacle_detect" type="control_node.py" name="controller" output="screen"></node>
+    
+    <node pkg="obstacle_detect" type="monitor_node.py" name="monitor"></node>
+
+</launch>

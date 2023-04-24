@@ -1,0 +1,8 @@
+prefix=/home/mahdi/Desktop/Robotics/project2/HW2_9731701/packages/hw2_ws/install
+
+Name: get_destination
+Description: Description of get_destination
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: 
