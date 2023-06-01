@@ -1,0 +1,8 @@
+prefix=/home/mahdi/Desktop/Robotics/project3/hw3_ws/install
+
+Name: step2
+Description: Description of step2
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

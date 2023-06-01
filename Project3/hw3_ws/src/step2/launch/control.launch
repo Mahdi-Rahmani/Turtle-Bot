@@ -1,0 +1,20 @@
+<launch>
+
+    <arg name="shape" default="rectangle"/>
+
+    <include file="$(find turtlebot3_gazebo)/launch/my_empty_world.launch">
+        <arg name="x_pos" value="0.0"/>
+        <arg name="y_pos" value="0.0"/>
+        <arg name="z_pos" value="0.0"/>
+        <arg name="yaw" value="0.0"/>
+    </include>
+    
+    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_gazebo_rviz.launch"/>
+
+    <node pkg="step2" type="control_node.py" name="controller" output="screen">
+        <param name="shape" value="$(arg shape)" />
+    </node>
+
+    <node pkg="step2" type="monitor_node.py" name="monitor"></node>
+    
+</launch>
