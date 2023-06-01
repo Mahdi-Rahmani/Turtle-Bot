@@ -1,0 +1,18 @@
+<launch>
+
+    <include file="$(find turtlebot3_gazebo)/launch/my_empty_world.launch">
+        <arg name="x_pos" value="0.0"/>
+        <arg name="y_pos" value="0.0"/>
+        <arg name="z_pos" value="0.0"/>
+        <arg name="yaw" value="0.0"/>
+    </include>
+    
+    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_gazebo_rviz.launch"/>
+
+    <node pkg="step1part1" type="controller.py" name="controller" output="screen">
+        <param name="angular_speed" value="0.02"/>
+    </node>
+
+    <node pkg="step1part1" type="monitor.py" name="monitor"></node>
+    
+</launch>
