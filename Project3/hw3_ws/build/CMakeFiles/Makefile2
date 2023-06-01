@@ -61,6 +61,7 @@ all: turtlebot3_simulations/turtlebot3_simulations/all
 all: step2/all
 all: step1part1/all
 all: step1part2/all
+all: step3/all
 all: turtlebot3/turtlebot3_bringup/all
 all: turtlebot3/turtlebot3_example/all
 all: turtlebot3_simulations/turtlebot3_fake/all
@@ -80,6 +81,7 @@ preinstall: turtlebot3_simulations/turtlebot3_simulations/preinstall
 preinstall: step2/preinstall
 preinstall: step1part1/preinstall
 preinstall: step1part2/preinstall
+preinstall: step3/preinstall
 preinstall: turtlebot3/turtlebot3_bringup/preinstall
 preinstall: turtlebot3/turtlebot3_example/preinstall
 preinstall: turtlebot3_simulations/turtlebot3_fake/preinstall
@@ -104,6 +106,7 @@ clean: turtlebot3_simulations/turtlebot3_simulations/clean
 clean: step2/clean
 clean: step1part1/clean
 clean: step1part2/clean
+clean: step3/clean
 clean: turtlebot3/turtlebot3_bringup/clean
 clean: turtlebot3/turtlebot3_example/clean
 clean: turtlebot3_simulations/turtlebot3_fake/clean
@@ -253,6 +256,24 @@ step2/clean: step2/CMakeFiles/actionlib_msgs_generate_messages_eus.dir/clean
 step2/clean: step2/CMakeFiles/geometry_msgs_generate_messages_nodejs.dir/clean
 
 .PHONY : step2/clean
+
+#=============================================================================
+# Directory level rules for directory step3
+
+# Recursive "all" directory target.
+step3/all:
+
+.PHONY : step3/all
+
+# Recursive "preinstall" directory target.
+step3/preinstall:
+
+.PHONY : step3/preinstall
+
+# Recursive "clean" directory target.
+step3/clean:
+
+.PHONY : step3/clean
 
 #=============================================================================
 # Directory level rules for directory turtlebot3/turtlebot3

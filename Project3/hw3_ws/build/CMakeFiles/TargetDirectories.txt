@@ -136,6 +136,13 @@
 /home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step1part2/CMakeFiles/step1part2_gennodejs.dir
 /home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step1part2/CMakeFiles/step1part2_generate_messages_nodejs.dir
 /home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step1part2/CMakeFiles/step1part2_genpy.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/install/strip.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/install/local.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/install.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/list_install_components.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/rebuild_cache.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/edit_cache.dir
+/home/mahdi/Desktop/Robotics/project3/hw3_ws/build/step3/CMakeFiles/test.dir
 /home/mahdi/Desktop/Robotics/project3/hw3_ws/build/turtlebot3/turtlebot3_bringup/CMakeFiles/install/strip.dir
 /home/mahdi/Desktop/Robotics/project3/hw3_ws/build/turtlebot3/turtlebot3_bringup/CMakeFiles/install/local.dir
 /home/mahdi/Desktop/Robotics/project3/hw3_ws/build/turtlebot3/turtlebot3_bringup/CMakeFiles/list_install_components.dir

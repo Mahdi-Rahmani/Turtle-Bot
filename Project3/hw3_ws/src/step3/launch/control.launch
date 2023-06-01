@@ -1,0 +1,16 @@
+<launch>
+
+    <include file="$(find step3)/launch/turtlebot3_square_wall.launch">
+        <arg name="x_pos" value="0.0"/>
+        <arg name="y_pos" value="0.0"/>
+        <arg name="z_pos" value="0.0"/>
+        <arg name="yaw" value="1.5708"/>
+    </include>
+
+    <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_gazebo_rviz.launch"/>
+
+    <node pkg="step3" type="control_node.py" name="controller" output="screen"></node>
+
+    <node pkg="step3" type="monitor_node.py" name="monitor"></node>
+    
+</launch>
