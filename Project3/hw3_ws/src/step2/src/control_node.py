@@ -9,16 +9,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class PIDController():
+
     def __init__(self) -> None:
 
         rospy.init_node("controller" , anonymous=False)                           # initialize node
         self.cmd_publisher = rospy.Publisher('/cmd_vel' , Twist , queue_size=10)  # this node also is a publisher
+        rospy.on_shutdown(self.on_shutdown)
 
         # linear velocity PID gains
-        #self.k_p_l = 0.15
-        #self.k_i_l = 0.002
-        #self.k_d_l = 0.03
-
         self.k_p_l = 0.1
         self.k_i_l = 0.001
         self.k_d_l = 0.02
@@ -26,6 +24,11 @@ class PIDController():
         self.k_p_a = 0.3
         self.k_i_a = 0.003
         self.k_d_a = 0.1
+        
+
+        # its not necessary to check all points if we have 
+        # alot of sample on path.
+        self.index_increment = 2
 
         # the points list on a desired shape
         self.shape = rospy.get_param("/controller/shape")
@@ -33,15 +36,16 @@ class PIDController():
             self.points = self.make_rectangle()
         elif self.shape == "star":
             self.points = self.make_star()
-        else:
+        elif self.shape == "logarithmic_spiral":
             self.points = self.make_logarithmic_spiral()
+            self.index_increment = 1
+        else:
+            rospy.loginfo(f"please enter a valid shape")
 
         # threshold for getting next point
         self.dist_threshold = 0.25
-        # rect
-        #self.angle_threshold = 0.5
-        #star
-        self.angle_threshold = 1
+        self.angle_threshold = 1.2
+
         # define goal variables
         self.x_goal = 0
         self.y_goal = 0
@@ -60,8 +64,11 @@ class PIDController():
         rate = 1/self.dt
         self.r = rospy.Rate(rate)
 
-    # heading of the robot 
     def get_heading(self):
+        '''
+        get the yaw angle of robot in world. 
+        We call it, heading of the robot.
+        '''
         # waiting for the most recent message from topic /odom
         msg = rospy.wait_for_message("/odom" , Odometry)
         
@@ -74,8 +81,10 @@ class PIDController():
         
         return yaw
     
-    # position of the robot
     def get_pose(self):
+        '''
+        get x and y coordinate of position of the robot
+        '''
         # waiting for the most recent message from topic /odom
         msg = rospy.wait_for_message("/odom" , Odometry)
 
@@ -83,44 +92,65 @@ class PIDController():
 
         return position.x, position.y
 
-     # function below get us the current Euclidean distance from target point
     def get_distance(self, point_target, point_curr):
+        '''
+        this function calculate Euclidean distance between 
+        a given current and target point.
+        '''
         x1, y1 = point_curr
         x2, y2 = point_target
+
         return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
-    # function below get us the current Euclidean distance from goal
     def distance_from_goal(self):
+        '''
+        this function get us the current Euclidean distance from goal
+        '''
         x_curr, y_curr = self.get_pose()
         distance = math.sqrt((self.x_goal-x_curr)**2 + (self.y_goal-y_curr)**2)
 
         return distance
     
-    # function below first calculate the desired angle from current pose to goal pose
-    # it means that robot heading must be equal to this angle for being in a 
-    # correct direction. then return the difference between heading and desired angle.
+
     def angle_from_goal(self):
+        '''
+        function below first calculate the heading angle and then the desired angle from current pose to goal pose.
+        it means that robot heading must be equal to this angle for being in a 
+        correct direction. then return the difference between heading and desired angle.
+        '''
+
+        # find x and y of current position and find relative x and y to goal point
         x_curr, y_curr = self.get_pose()
         relative_x = self.x_goal - x_curr
         relative_y = self.y_goal - y_curr
-        rospy.loginfo(f"relative_x : {relative_x} relative_y : {relative_y}")
+        # get heading of robot in radian
         heading = self.get_heading()
+        # now we should find the desired angle
+        # desired angle tell us the angle of goal point relative to current point
         desired_angle = 0
-        if (relative_x == 0 and relative_y ==0 ):
+        if (relative_x == 0 and relative_y ==0):
+            # this state (x=0 , y =0) is undefined so we handle it seperately
             desired_angle = heading
         else:
             desired_angle = math.atan2(relative_y, relative_x)
-
-        rospy.loginfo(f"heading : {heading} desired_angle : {desired_angle}")
+        # the angle express howmuch we should rotate to reach the desired angle
         angle = heading - desired_angle
+        # but we design controller and if the angle is bigger than 180 or less than -180
+        # the robot must rotate alot so we should find its complementary to 360 degrees
         if angle < math.radians(-180):
             angle = math.radians(360)-abs(angle)
         elif angle > math.radians(180):
             angle = angle-math.radians(360)
-        rospy.loginfo(f"angle : {angle}")
+
         return angle
     
     def find_nearest_point(self):
+        '''
+        When the robot is placed in a world it should find the closest point
+        of given path and move forward it. this function find the closest point.
+        also we consider that, the robot when starting to move the nearest point 
+        maybe changed so we should update the nearest point.
+        '''
         curr_point = self.get_pose()
         goal_point = self.points[0]
         my_min_dist = self.get_distance(goal_point, curr_point)
@@ -134,9 +164,15 @@ class PIDController():
             counter += 1
         self.x_goal, self.y_goal = goal_point
 
-    # below code make sample points on a rectangle shape and  
-    # if we plot them show us a rectangle
+
     def make_rectangle(self):
+        '''
+        below code make sample points on a rectangle shape and  
+        if we plot them show us a rectangle. we return the list of
+        this points and each point also is a list like [x,y].
+        length: 6
+        width: 4
+        '''
         X1 = np.linspace(-3, 3 , 100)
         Y1 = np.array([2]*100)
 
@@ -153,9 +189,13 @@ class PIDController():
         points = [[x, y] for x, y in zip(X, Y)]
         return points
     
-    # below code make sample points on a star shape and  
-    # if we plot them show us a star
+ 
     def make_star(self):
+        '''
+        below code make sample points on a star shape and  
+        if we plot them show us a star. we return the list of
+        this points and each point also is a list like [x,y].
+        '''
         X1 = np.linspace(0, 3 , 100)
         Y1 = - (7/3) * X1  + 12
 
@@ -190,9 +230,13 @@ class PIDController():
         points = [[x, y] for x, y in zip(X, Y)]
         return points
 
-    # below code make sample points on a logarithmic spiral shape and  
-    # if we plot them show us a logarithmic spiral 
+
     def make_logarithmic_spiral(self):
+        '''
+        below code make sample points on a logarithmic spiral shape and  
+        if we plot them show us a logarithmic spiral. we return the list of
+        this points and each point also is a list like [x,y].
+        '''
         a = 0.17
         k = math.tan(a)
         X , Y = [] , []
@@ -257,25 +301,23 @@ class PIDController():
             prev_error_angle = err_angle
 
             #rospy.loginfo(f"angular velocity")
-            rospy.loginfo(f"P_a : {P_a} I_a : {I_a} D_a : {D_a}")
-            rospy.loginfo(f"error_angle : {err_angle} angular speed : {move_cmd.angular.z}")
+            #rospy.loginfo(f"P_a : {P_a} I_a : {I_a} D_a : {D_a}")
 
             #rospy.loginfo(f"error_angle : {err_angle} error_dist: {err_dist} angular speed : {move_cmd.angular.z} linear speed : {move_cmd.linear.x}")
+            
             # If distance from current goal is less than threshold then define new goal
-
             if err_dist < self.dist_threshold and err_angle < self.angle_threshold:
                 close_enough = True
-                # rect
-                # self.index += 3
-                # star
-                self.index += 2
+                self.index += self.index_increment
+
+                # Note that for logarithmic_spiral if arrive to last point we dont continue
+                # but for star and rectangle we continue until user make interrupt
+                if self.shape == "logarithmic_spiral" and self.index > len(self.points)-1:
+                    break
                 self.x_goal, self.y_goal = self.points[self.index%len(self.points)]
-                rospy.loginfo(f"point")
-                rospy.loginfo(f"x_goal : {self.x_goal } y_goal : {self.y_goal}")
+
             elif not close_enough: 
                 self.find_nearest_point()
-                rospy.loginfo(f"near")
-                rospy.loginfo(f"x_goal : {self.x_goal } y_goal : {self.y_goal}")
         
             self.r.sleep()
 

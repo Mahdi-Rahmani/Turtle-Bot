@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /Grid1
         - /Axes1
+        - /LaserScan1
         - /DepthCloud1/Auto Size1
         - /Path1
       Splitter Ratio: 0.6029411554336548
@@ -85,8 +86,8 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
+      Size (m): 0.10000000149011612
+      Style: Spheres
       Topic: /scan
       Unreliable: false
       Use Fixed Frame: true
@@ -193,12 +194,12 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Axes: true
         DepthCloud: true
         Grid: true
         LaserScan: true
         Odometry: true
+        Path: true
         RobotModel: true
         TF: true
         Value: true
@@ -325,7 +326,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.565000057220459
+      Angle: 0
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -335,10 +336,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 26.43191146850586
+      Scale: 42.158287048339844
       Target Frame: <Fixed Frame>
-      X: 9.743497848510742
-      Y: -0.17211765050888062
+      X: 6.1946234703063965
+      Y: 1.5932449102401733
     Saved: ~
 Window Geometry:
   Camera:

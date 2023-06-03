@@ -1,5 +1,7 @@
 <launch>
 
+    <arg name="follow_type" default="left"/>
+
     <include file="$(find step3)/launch/turtlebot3_square_wall.launch">
         <arg name="x_pos" value="0.0"/>
         <arg name="y_pos" value="0.0"/>
@@ -9,7 +11,9 @@
 
     <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_gazebo_rviz.launch"/>
 
-    <node pkg="step3" type="control_node.py" name="controller" output="screen"></node>
+    <node pkg="step3" type="control_node.py" name="controller" output="screen">
+        <param name="follow_type" value="$(arg follow_type)" />
+    </node>
 
     <node pkg="step3" type="monitor_node.py" name="monitor"></node>
     

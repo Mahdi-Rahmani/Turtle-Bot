@@ -15,22 +15,24 @@ class PIDController():
         rospy.wait_for_service('get_destination')        # wait for response from service
         self.calc_client = rospy.ServiceProxy('get_destination', GetNextDestination)
         self.cmd_publisher = rospy.Publisher('/cmd_vel' , Twist , queue_size=10)  # this node also is a publisher
+        rospy.on_shutdown(self.on_shutdown)
 
         self.current_x = 0
         self.current_y = 0
 
         # linear velocity PID gains
         self.k_p_l = 0.05
-        self.k_i_l = 0
-        self.k_d_l = 0
+        self.k_i_l = 0.0005
+        self.k_d_l = 0.1
 
         # angular velocity PID gains
-        self.k_p_a = 0.1
-        self.k_i_a = 0
-        self.k_d_a = 0
+        self.k_p_a = 0.2
+        self.k_i_a = 0.005
+        self.k_d_a = 0.4
 
         # threshold for getting next point
-        self.threshold = 0.009
+        self.dist_threshold = 0.035
+        self.angle_threshold = 0.7
 
         # define goal variables
         self.x_goal = 0
@@ -40,10 +42,6 @@ class PIDController():
         self.dist_errs = []
         self.angle_errs = []
 
-        # settings for rotation
-        self.epsilon = 0.02
-        self.angular_velocity = 0.04
-
         # time step of get feedback
         self.dt = 0.005
         # the desired value
@@ -52,8 +50,11 @@ class PIDController():
         rate = 1/self.dt
         self.r = rospy.Rate(rate)
 
-    # heading of the robot 
     def get_heading(self):
+        '''
+        get the yaw angle of robot in world. 
+        We call it, heading of the robot.
+        '''
         # waiting for the most recent message from topic /odom
         msg = rospy.wait_for_message("/odom" , Odometry)
         
@@ -66,8 +67,10 @@ class PIDController():
         
         return yaw
     
-    # position of the robot
     def get_pose(self):
+        '''
+        get x and y coordinate of position of the robot
+        '''
         # waiting for the most recent message from topic /odom
         msg = rospy.wait_for_message("/odom" , Odometry)
 
@@ -75,34 +78,53 @@ class PIDController():
 
         return position.x, position.y
 
-    # function below get us the current Euclidean distance from goal
     def distance_from_goal(self):
+        '''
+        this function get us the current Euclidean distance from goal
+        '''
         x_curr, y_curr = self.get_pose()
         distance = math.sqrt((self.x_goal-x_curr)**2 + (self.y_goal-y_curr)**2)
 
         return distance
     
-    # function below first calculate the desired angle from current pose to goal pose
-    # it means that robot heading must be equal to this angle for being in a 
-    # correct direction. then return the difference between heading and desired angle.
     def angle_from_goal(self):
+        '''
+        function below first calculate the heading angle and then the desired angle from current pose to goal pose.
+        it means that robot heading must be equal to this angle for being in a 
+        correct direction. then return the difference between heading and desired angle.
+        '''
+        # find x and y of current position and find relative x and y to goal point
         x_curr, y_curr = self.get_pose()
         relative_x = self.x_goal - x_curr
         relative_y = self.y_goal - y_curr
+        # get heading of robot in radian
+        heading = self.get_heading()
+        # now we should find the desired angle
+        # desired angle tell us the angle of goal point relative to current point
         desired_angle = 0
-        if (relative_x == 0 and relative_y ==0 ):
-            desired_angle = 0
+        if (relative_x == 0 and relative_y ==0):
+            # this state (x=0 , y =0) is undefined so we handle it separately
+            desired_angle = heading
         else:
             desired_angle = math.atan2(relative_y, relative_x)
-
-        heading = self.get_heading()
-
+        # the angle express howmuch we should rotate to reach the desired angle
         angle = heading - desired_angle
+        # but we design controller and if the angle is bigger than 180 or less than -180
+        # the robot must rotate alot so we should find its complementary to 360 degrees
+        if angle < math.radians(-180):
+            angle = math.radians(360)-abs(angle)
+        elif angle > math.radians(180):
+            angle = angle-math.radians(360)
         return angle
     
-    # if the distance from current goal is less than threshold this function is called
-    # this function get next goal from service
+
     def get_next_goal(self):
+        '''
+        This method first find current x and y and then 
+        use them as inputs for send request to service and
+        get next goal. The goal must be in range (-20,20) for
+        x and y and also has minimum distance of 10 at least.
+        '''
         self.current_x, self.current_y = self.get_pose()
         req = GetNextDestinationRequest()
         req.current_x = self.current_x
@@ -111,21 +133,18 @@ class PIDController():
         resp = self.calc_client(req)
         self.x_goal, self.y_goal = resp.next_x, resp.next_y
         rospy.loginfo(f"Client : Goal pose : {resp.next_x, resp.next_y}")
-    
-    # after finding the new goal first we should rotate until heading 
-    # of robot is placed in a correct direction approximately
-    def rotate(self):
-        self.cmd_publisher.publish(Twist())
-        twist = Twist()
-        twist.angular.z = self.angular_velocity
-        if (self.angle_from_goal()>0):
-            twist.angular.z = -self.angular_velocity
-        while abs(self.angle_from_goal()) >= self.epsilon:
-            self.cmd_publisher.publish(twist)
-        self.cmd_publisher.publish(Twist())
+
 
     def control(self):
-
+        '''
+        this function is the main function of this code. we calculate the angular and 
+        linear distance error and try to calculate P, I, D terms. the summation of these
+        terms define our linear and angular velocity.
+        also we define two thresholds and if the robot close to goal point and the 
+        goal distance and angle distance are less than that thresholds then we should 
+        find new goal and move toward it. This process is happened 4 times and then
+        the program is terminated.
+        '''
         distance = self.distance_from_goal()    
         sum_i_dist = 0
         prev_error_dist = 0
@@ -141,16 +160,27 @@ class PIDController():
         counter = 0
 
         while not rospy.is_shutdown():
-            # In this task we should go to a new goal for 4 times
-            if counter == 4:
-                break
-            
+           
             # If distance from current goal is less than threshold then define new goal
-            if err_dist < self.threshold and err_angle < self.threshold:
+            if err_dist < self.dist_threshold and err_angle < self.angle_threshold:
+
                 counter += 1
-                rospy.loginfo(f"error dist: {err_dist } err_angle : {err_angle}")
+
+                if counter > 1:
+                    rospy.loginfo(f"Goal{counter-1} final error dist: {err_dist } final err_angle : {err_angle}")
+                    rospy.loginfo(f"------------------------------------")
+
+                # In this task we should go to a new goal for 4 times
+                if counter == 5:
+                    break
+        
                 self.get_next_goal()
-                #self.rotate()
+                # the previous path errors aren't important for us. 
+                # So initialize related parameters again
+                sum_i_angle = 0
+                prev_error_angle = 0
+                sum_i_dist = 0
+                prev_error_dist = 0
             
             # linear velocity
             distance = self.distance_from_goal() 
@@ -183,14 +213,16 @@ class PIDController():
             prev_error_angle = err_angle
 
             #rospy.loginfo(f"angular velocity")
-            rospy.loginfo(f"P_a : {P_a} I_a : {I_a} D_a : {D_a}")
+            #rospy.loginfo(f"P_a : {P_a} I_a : {I_a} D_a : {D_a}")
 
-            rospy.loginfo(f"error_angle : {err_angle} error_dist: {err_dist} angular speed : {move_cmd.angular.z} linear speed : {move_cmd.linear.x}")
-            
-        
+            #rospy.loginfo(f"error_angle : {err_angle} error_dist: {err_dist} angular speed : {move_cmd.angular.z} linear speed : {move_cmd.linear.x}")
+            #rospy.loginfo(f"error_angle : {err_angle} error_dist: {err_dist}")
             self.r.sleep()
 
     def on_shutdown(self):
+        '''
+        this method plot error of linear and angular velocity separately.
+        '''
         rospy.loginfo("Stopping the robot...")
         self.cmd_publisher.publish(Twist())
         # linear
