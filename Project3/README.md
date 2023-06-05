@@ -31,7 +31,7 @@ You can see the result of this section in the following video:
 </div>
 
 Also you can see the result of this each controller in the following images:
-P controller             |  PD controller   | PID controller
+P controller    |  PD controller   | PID controller  |
 :-------------------------:|:-------------------------:|:-------------------------:|
 ![](https://github.com/Mahdi-Rahmani/Turtle-Bot/blob/main/Project3/Results_img/step1part1_P.png)  |  ![](https://github.com/Mahdi-Rahmani/Turtle-Bot/blob/main/Project3/Results_img/step1part1_PD.png)  |  ![](https://github.com/Mahdi-Rahmani/Turtle-Bot/blob/main/Project3/Results_img/step1part1_PID.png)  | 
 ![](https://github.com/Mahdi-Rahmani/Turtle-Bot/blob/main/Project3/Results_img/step1part1_P_angle_err.png)  |  ![](https://github.com/Mahdi-Rahmani/Turtle-Bot/blob/main/Project3/Results_img/step1part1_PD_angle_err.png)  |  ![](https://github.com/Mahdi-Rahmani/Turtle-Bot/blob/main/Project3/Results_img/step1part1_PID_angle_err.png)  |
