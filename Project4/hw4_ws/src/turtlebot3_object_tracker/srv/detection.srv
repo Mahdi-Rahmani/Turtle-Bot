@@ -1,0 +1,8 @@
+string label
+---
+float64 xc
+float64 yc
+float64 width
+float64 height
+float64 image_x
+float64 image_y
