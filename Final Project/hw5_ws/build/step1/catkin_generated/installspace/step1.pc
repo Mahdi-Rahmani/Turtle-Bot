@@ -1,0 +1,8 @@
+prefix=/home/mahdi/Desktop/Robotics/project5/hw5_ws/install
+
+Name: step1
+Description: Description of step1
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,13 @@
+<launch>
+    
+    <include file="$(find step1)/launch/turtlebot3_maze.launch">
+        <arg name="x_pos" value="0.0"/>
+        <arg name="y_pos" value="0.0"/>
+        <arg name="z_pos" value="0.0"/>
+        <arg name="yaw" value="0.0"/>
+    </include>
+
+    <node pkg="step1" type="VFH.py" name="VFH" output="screen"></node>
+    <node pkg="step1" type="control.py" name="contoller" output="screen"></node>
+   
+</launch>

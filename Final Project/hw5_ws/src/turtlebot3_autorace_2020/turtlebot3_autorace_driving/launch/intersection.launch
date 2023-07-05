@@ -1,0 +1,12 @@
+<launch>
+
+  <!--include file="$(find turtlebot3_autorace_core)/launch/turtlebot3_autorace_core.launch">
+    <arg name="mission" value="intersection"/>
+  </include-->
+
+  <include file="$(find turtlebot3_autorace_core)/launch/turtlebot3_autorace_mission.launch" />
+
+
+
+
+</launch>

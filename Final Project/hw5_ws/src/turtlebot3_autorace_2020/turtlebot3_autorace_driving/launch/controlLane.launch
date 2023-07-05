@@ -1,0 +1,19 @@
+<launch>
+  
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_autorace_2020.launch" >
+        <arg name="x_pos" value="1.2"/>
+        <arg name="y_pos" value="0.23"/>
+        <arg name="z_pos" value="0.0"/>
+   </include>
+
+
+  <include file="$(find turtlebot3_autorace_camera)/launch/intrinsic_camera_calibration.launch" />
+
+  <include file="$(find turtlebot3_autorace_camera)/launch/extrinsic_camera_calibration.launch" />
+
+  <include file="$(find turtlebot3_autorace_detect)/launch/detect_lane.launch" />
+
+  <include file="$(find turtlebot3_autorace_driving)/launch/turtlebot3_autorace_control_lane.launch" />
+
+
+</launch>

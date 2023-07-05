@@ -1,0 +1,33 @@
+<launch>
+  
+  
+  <include file="$(find turtlebot3_gazebo)/launch/turtlebot3_autorace_2020.launch" />
+
+  <include file="$(find turtlebot3_autorace_camera)/launch/intrinsic_camera_calibration.launch" />
+
+  <include file="$(find turtlebot3_autorace_camera)/launch/extrinsic_camera_calibration.launch" />
+
+  <include file="$(find turtlebot3_autorace_detect)/launch/detect_lane.launch" />
+
+  <include file="$(find turtlebot3_autorace_detect)/launch/detect_sign.launch">
+    <arg name="mission" value="intersection"/>
+  </include>
+
+  <include file="$(find turtlebot3_autorace_detect)/launch/detect_sign.launch">
+    <arg name="mission" value="level_crossing"/>
+  </include>
+
+  <include file="$(find turtlebot3_autorace_detect)/launch/detect_sign.launch">
+    <arg name="mission" value="construction"/>
+  </include>
+
+  <include file="$(find turtlebot3_autorace_core)/launch/turtlebot3_autorace_core.launch">
+    <arg name="mission" value="intersection"/>
+  </include>
+
+  <include file="$(find turtlebot3_autorace_core)/launch/turtlebot3_autorace_mission.launch" />
+
+  <include file="$(find turtlebot3_autorace_driving)/launch/turtlebot3_autorace_control_lane.launch" />
+
+
+</launch>

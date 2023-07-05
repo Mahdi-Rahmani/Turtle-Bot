@@ -1,0 +1,165 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+################################################################################
+# Copyright 2018 ROBOTIS CO., LTD.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
+# Author: Leon Jung, Gilbert, Ashe Kim
+ 
+import rospy
+import numpy as np
+from std_msgs.msg import Float64
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
+import tf
+import math
+
+class ControlLane():
+    def __init__(self):
+        self.sub_lane = rospy.Subscriber('/control/lane', Float64, self.cbFollowLane, queue_size = 1)
+        self.sub_max_vel = rospy.Subscriber('/control/max_vel', Float64, self.cbGetMaxVel, queue_size = 1)
+        self.pub_cmd_vel = rospy.Publisher('/control/cmd_vel', Twist, queue_size = 1)
+        rospy.on_shutdown(self.fnShutDown)
+        self.lastError = 0
+        
+        # define our states
+        self.LANEDETECT_MODE = 0
+        self.GO_STRAIGHT = 1
+        self.CLOCKWISE = 2
+        self.COUNTER_CLOCKWISE = 3
+
+        self.cur_state = self.LANEDETECT_MODE
+        self.prev_state = self.LANEDETECT_MODE
+        
+        self.MAX_VEL = 0.1
+        self.flag_rotate = 0
+        self.heading_dist = 0
+        self.first_heading = 0
+        self.center = 0
+        self.ranges = []
+
+    def cbGetMaxVel(self, max_vel_msg):
+        self.MAX_VEL = max_vel_msg.data
+
+
+    def cbFollowLane(self, desired_center):
+        center = desired_center.data
+        self.center = center
+            
+        
+    def fnShutDown(self):
+
+        rospy.loginfo("Shutting down. cmd_vel will be 0")
+
+        twist = Twist()
+        twist.linear.x = 0
+        twist.linear.y = 0
+        twist.linear.z = 0
+        twist.angular.x = 0
+        twist.angular.y = 0
+        twist.angular.z = 0
+        self.pub_cmd_vel.publish(twist) 
+
+
+    def rotate(self, angular_z, direction):
+        heading = self.get_heading()
+        while abs(self.get_heading() - heading) <= 45:
+            twist = Twist()
+            twist.angular.z = angular_z
+            self.pub_cmd_vel.publish(twist)
+        self.cur_state = self.GO_STRAIGHT
+        self.prev_state = direction
+        twist = Twist()
+        self.pub_cmd_vel.publish(twist)
+            
+    def get_heading(self):
+        msg = rospy.wait_for_message("/odom",Odometry)
+        orientation = msg.pose.pose.orientation
+        roll, pitch, yaw = tf.transformations.euler_from_quaternion((orientation.x, orientation.y, orientation.z, orientation.w))
+        return math.degrees(yaw)
+
+    def my_laser_scanner(self):
+        laser_data = rospy.wait_for_message("/scan",LaserScan)
+        self.heading_dist = min(min(laser_data.ranges[:8]),min(laser_data.ranges[352:]))
+        self.right_dist = min(laser_data.ranges[215:300])
+        self.left_dist = min(laser_data.ranges[60:120])
+        self.ranges = laser_data.ranges
+
+    def main(self):
+        while not rospy.is_shutdown():
+            self.my_laser_scanner()            
+            if self.cur_state == self.LANEDETECT_MODE:
+                self.prev_state = self.LANEDETECT_MODE
+                center = self.center
+                error = center - 500
+
+                Kp = 0.0025
+                Kd = 0.007
+
+                angular_z = Kp * error + Kd * (error - self.lastError)
+                self.lastError = error
+                twist = Twist()
+                twist.linear.x = min(self.MAX_VEL * ((1 - abs(error) / 500) ** 2.2), 0.05)
+                twist.linear.y = 0
+                twist.linear.z = 0
+                twist.angular.x = 0
+                twist.angular.y = 0
+                twist.angular.z = -max(angular_z, -2.0) if angular_z < 0 else -min(angular_z, 2.0)
+                self.pub_cmd_vel.publish(twist)
+
+                ################################################################################################
+                
+                if self.heading_dist <= 0.3 and (str(self.right_dist) == 'inf' or self.right_dist > 0.9):
+                    self.cur_state = self.CLOCKWISE
+                    self.prev_state = self.LANEDETECT_MODE
+                elif self.heading_dist <= 0.3 and (str(self.left_dist) == 'inf' or self.left_dist > 0.9):
+                    self.cur_state = self.COUNTER_CLOCKWISE
+                    self.prev_state = self.LANEDETECT_MODE
+                else:
+                    self.cur_state = self.LANEDETECT_MODE
+                
+            if self.cur_state == self.CLOCKWISE:
+                self.rotate(0.08, self.CLOCKWISE)
+                
+            
+            if self.cur_state == self.GO_STRAIGHT:
+                self.lastErorr = self.right_dist
+                min_right_angle = self.ranges.index(min(self.ranges[240:300]))
+                min_left_angle = self.ranges.index(min(self.ranges[60:120]))
+                tmp_list_right = list(range(258,272))
+                tmp_list_left = list(range(81,100))
+                if (min_right_angle in tmp_list_right and self.prev_state == self.CLOCKWISE) or (min_left_angle in tmp_list_left and self.prev_state == self.COUNTER_CLOCKWISE):
+                    self.cur_state = self.LANEDETECT_MODE
+                    self.prev_state = self.GO_STRAIGHT
+                twist = Twist()
+                twist.linear.x = 0.05
+                twist.linear.y = 0
+                twist.linear.z = 0
+                twist.angular.x = 0
+                twist.angular.y = 0
+                twist.angular.z = 0
+                self.pub_cmd_vel.publish(twist)
+            
+            if self.cur_state == self.COUNTER_CLOCKWISE:
+                self.rotate(-0.08, self.COUNTER_CLOCKWISE)
+        
+        
+
+if __name__ == '__main__':
+    rospy.init_node('control_lane')
+    node = ControlLane()
+    node.main()
